@@ -25,10 +25,10 @@ SUITABLE_CORE=
 
 
 function get_curr_host_ip(){
-    local ip=$(python -c "import socket;print([(s.connect(('8.8.8.8', 53)),
+    local _ip=$(python -c "import socket;print([(s.connect(('8.8.8.8', 53)),
     s.getsockname()[0], s.close()) for s in
     [socket.socket(socket.AF_INET,socket.SOCK_DGRAM)]][0][1])")
-    echo ${ip}
+    echo ${_ip}
 }
 
 
@@ -41,49 +41,49 @@ function round_value(){
 
 # Get current appName
 function get_curr_app_name(){
-    local ip=$1
+    local _ip=$1
     
     # fetch current app name of host
-    local app_name=($(query app ${ip}))
+    local _app_name=($(query app ${_ip}))
     
-    if [[ ${#app_name[@]} -ne 1 ]]; then
+    if [[ ${#_app_name[@]} -ne 1 ]]; then
         echo ""
     else
-        echo ${app_name[0]}
+        echo ${_app_name[0]}
     fi
 }
 
 # Current cpu usage.
 function get_curr_cpu_rate(){
-	local curr_cpu_idle=`env LC_ALL=en_US.UTF8 sar 1 1 | grep ^Average | awk '{print $8}' `
-	local curr_cpu_rate_int=$(round_value ${curr_cpu_idle})
-	local rate=$(expr 100 - ${curr_cpu_rate_int})
+	local _curr_cpu_idle=`env LC_ALL=en_US.UTF8 sar 1 1 | grep ^Average | awk '{print $8}' `
+	local _curr_cpu_rate_int=$(round_value ${_curr_cpu_idle})
+	local rate=$(expr 100 - ${_curr_cpu_rate_int})
 	echo ${rate}
 }
 
 
 # Current cpu cores.
 function get_cpu_core_num(){
-	local cpu_core_num=`cat /proc/cpuinfo| grep "processor"| wc -l`
-	echo ${cpu_core_num}
+	local _cpu_core_num=`cat /proc/cpuinfo| grep "processor"| wc -l`
+	echo ${_cpu_core_num}
 }
 
 # get stress core count by usage.
 function get_stress_cores(){
-    local current_cores=$1
-    local current_usage=$2
-    local diff_rate=$(round_value $(expr ${EXPECT_CPU_RATE} - ${current_usage}))
+    local _current_cores=$1
+    local _current_usage=$2
+    local _diff_rate=$(round_value $(expr ${EXPECT_CPU_RATE} - ${_current_usage}))
 
     if [[ "$SUITABLE_CORE" == "" ]];then
         if [[ ${diff_rate} -gt 0 ]]; then
-            local _count=$(round_value $(echo "${diff_rate} * ${current_cores} / 100"|bc))
+            local _count=$(round_value $(echo "${_diff_rate} * ${_current_cores} / 100"|bc))
             SUITABLE_CORE=${_count}
             echo ${_count}
         else
             echo "Skip"
         fi
     else
-        if [[ ${diff_rate} -gt 0 ]]; then
+        if [[ ${_diff_rate} -gt 0 ]]; then
             SUITABLE_CORE=$(expr ${SUITABLE_CORE} + 1)
             echo ${SUITABLE_CORE}
         elif [[ ${diff_rate} -lt -5 ]]; then
@@ -97,9 +97,9 @@ function get_stress_cores(){
 
 # Check app in app_list belongs to "$appName"
 function check_condition(){
-    local app_name=$1
+    local _app_name=$1
     for _app in ${APP_NAME_LIST[@]};do
-        if [[ "${_app}"x == "${app_name}"x ]]; then
+        if [[ "${_app}"x == "${_app_name}"x ]]; then
             return
         fi
     done
@@ -109,10 +109,10 @@ function check_condition(){
 
 function judge_cores(){
     # checks whether stress the suppress need to execute.
-    local current_cores=$1
-    local cores_to_judge=$2
-    local left_cores=$(expr ${current_cores} - ${cores_to_judge})
-    if [[ ${left_cores} -lt ${MIN_CORE_LEFT} ]]; then
+    local _current_cores=$1
+    local _cores_to_judge=$2
+    local _left_cores=$(expr ${_current_cores} - ${_cores_to_judge})
+    if [[ ${_left_cores} -lt ${MIN_CORE_LEFT} ]]; then
         echo "Skip"
     fi
 }
